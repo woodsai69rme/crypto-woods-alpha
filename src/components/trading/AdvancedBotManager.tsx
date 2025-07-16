@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -366,7 +365,7 @@ export const AdvancedBotManager: React.FC = () => {
                       </div>
                       <div>
                         <span className="text-gray-400">Side:</span>
-                        <Badge className={bot.currentPosition.side === 'long' ? 'bg-green-600' : 'bg-red-600'} size="sm">
+                        <Badge className={bot.currentPosition.side === 'long' ? 'bg-green-600' : 'bg-red-600'}>
                           {bot.currentPosition.side.toUpperCase()}
                         </Badge>
                       </div>
