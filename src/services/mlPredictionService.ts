@@ -201,7 +201,7 @@ export class MLPredictionService {
           user_id: user.user.id,
           action: 'ml_prediction',
           resource_type: 'prediction',
-          new_values: prediction
+          new_values: JSON.parse(JSON.stringify(prediction))
         });
       }
     } catch (error) {

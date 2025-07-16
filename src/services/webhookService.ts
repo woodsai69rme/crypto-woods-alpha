@@ -141,7 +141,7 @@ export class WebhookService {
           user_id: user.user.id,
           action: 'webhook_signal',
           resource_type: 'signal',
-          new_values: signal
+          new_values: JSON.parse(JSON.stringify(signal))
         });
       }
     } catch (error) {

@@ -339,11 +339,11 @@ export class BacktestingService {
           user_id: user.user.id,
           action: 'backtest_completed',
           resource_type: 'backtest',
-          new_values: { 
+          new_values: JSON.parse(JSON.stringify({ 
             id: result.id, 
             performance: result.performance,
             config: result.config 
-          }
+          }))
         });
       }
     } catch (error) {
