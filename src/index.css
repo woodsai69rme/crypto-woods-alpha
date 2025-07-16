@@ -1,68 +1,18 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
+/* Dark mode crypto trading theme */
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
-    --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 4.9%;
+    --card: 224 71.4% 4.1%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 4.9%;
+    --popover: 224 71.4% 4.1%;
     --popover-foreground: 210 40% 98%;
 
     --primary: 210 40% 98%;
@@ -83,14 +33,17 @@ All colors MUST be HSL.
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    --sidebar-background: 224 71.4% 4.1%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 210 40% 98%;
+    --sidebar-primary-foreground: 222.2 47.4% 11.2%;
+    --sidebar-accent: 217.2 32.6% 17.5%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217.2 32.6% 17.5%;
+    --sidebar-ring: 212.7 26.8% 83.9%;
+
+    --radius: 0.5rem;
   }
 }
 
@@ -101,5 +54,163 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Custom scrollbar for dark theme */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: rgb(31, 41, 55);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgb(75, 85, 99);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgb(107, 114, 128);
+  }
+
+  /* Crypto-specific animations */
+  .crypto-glow {
+    animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .price-up {
+    color: rgb(16, 185, 129);
+    animation: slide-up 0.3s ease-out;
+  }
+
+  .price-down {
+    color: rgb(239, 68, 68);
+    animation: slide-up 0.3s ease-out;
+  }
+
+  /* Trading chart styles */
+  .recharts-tooltip-wrapper {
+    outline: none !important;
+  }
+
+  .recharts-cartesian-grid-horizontal line,
+  .recharts-cartesian-grid-vertical line {
+    stroke: rgb(75, 85, 99);
+    stroke-dasharray: 3 3;
+  }
+
+  /* Real-time data indicators */
+  .live-indicator {
+    position: relative;
+  }
+
+  .live-indicator::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgb(16, 185, 129), transparent);
+    animation: pulse 2s infinite;
+  }
+
+  /* Custom button hover effects */
+  .trade-button-buy:hover {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+  }
+
+  .trade-button-sell:hover {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+  }
+
+  /* Portfolio chart animations */
+  .portfolio-chart {
+    transition: all 0.3s ease;
+  }
+
+  .portfolio-chart:hover {
+    transform: scale(1.02);
+  }
+
+  /* Order book styling */
+  .order-book-row {
+    transition: background-color 0.2s ease;
+  }
+
+  .order-book-row:hover {
+    background-color: rgba(75, 85, 99, 0.2);
+  }
+
+  /* Signal animations */
+  .signal-card {
+    animation: slide-up 0.5s ease-out;
+  }
+
+  .signal-new {
+    border-left: 4px solid rgb(16, 185, 129);
+    animation: pulse-glow 3s ease-out;
+  }
+
+  /* Liquidity map styling */
+  .liquidity-level {
+    transition: all 0.2s ease;
+  }
+
+  .liquidity-level:hover {
+    transform: translateX(4px);
+    border-left-width: 6px;
+  }
+
+  /* Mobile responsiveness */
+  @media (max-width: 768px) {
+    .sidebar-collapsed {
+      transform: translateX(-100%);
+    }
+    
+    .main-content-expanded {
+      margin-left: 0 !important;
+    }
+  }
+}
+
+/* Loading states */
+.loading-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(75, 85, 99, 0.1) 25%,
+    rgba(107, 114, 128, 0.2) 50%,
+    rgba(75, 85, 99, 0.1) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* High contrast mode for better visibility */
+@media (prefers-contrast: high) {
+  :root {
+    --border: 210 40% 70%;
+    --input: 210 40% 70%;
+  }
+}
+
+/* Reduced motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
