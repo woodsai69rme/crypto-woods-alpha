@@ -15,7 +15,11 @@ interface PortfolioItem {
   color: string;
 }
 
-export const PortfolioOverview: React.FC = () => {
+interface PortfolioOverviewProps {
+  requireAuth?: (action: () => void) => void;
+}
+
+export const PortfolioOverview: React.FC<PortfolioOverviewProps> = ({ requireAuth }) => {
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>([
     { symbol: 'BTC', name: 'Bitcoin', amount: 0.05432, value: 2350.25, change24h: -2.34, percentage: 45.2, color: '#F59E0B' },
     { symbol: 'ETH', name: 'Ethereum', amount: 0.8734, value: 2315.76, change24h: 1.23, percentage: 44.5, color: '#3B82F6' },

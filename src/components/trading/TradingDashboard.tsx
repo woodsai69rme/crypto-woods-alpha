@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AdvancedChart } from './AdvancedChart';
 import { OrderBook } from './OrderBook';
 import { PortfolioOverview } from './PortfolioOverview';
@@ -12,63 +13,25 @@ import { LiveSignals } from './LiveSignals';
 import { LiquidityMap } from './LiquidityMap';
 import { AIInsights } from './AIInsights';
 import { AITradingBot } from './AITradingBot';
+import { AccountManager } from './AccountManager';
+import { SocialTrading } from './SocialTrading';
+import { AuditTrail } from './AuditTrail';
+import { AdvancedBotManager } from './AdvancedBotManager';
 import { useTradingPairs, useMarketData, useAISignals } from '@/hooks/useTradingData';
 import { useAuthContext } from '@/components/auth/AuthProvider';
 import { LoginDialog } from '@/components/auth/LoginDialog';
-import { AlertTriangle, Bot, TrendingUp, Zap } from 'lucide-react';
+import { AlertTriangle, Bot, TrendingUp, Zap, Users, Shield, Settings, Wallet } from 'lucide-react';
 
 export const TradingDashboard: React.FC = () => {
   const [selectedPair, setSelectedPair] = useState<string>('BTCUSDT');
   const [selectedPairId, setSelectedPairId] = useState<string>('');
   const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const [activeTab, setActiveTab] = useState('trading');
   
   const { user } = useAuthContext();
   const { data: tradingPairs } = useTradingPairs();
   const { data: marketData } = useMarketData(selectedPairId);
   const { data: aiSignals } = useAISignals();
-
-  // Mock AI trading bots data
-  const mockBots = [
-    {
-      id: '1',
-      name: 'Momentum Hunter',
-      bot_type: 'momentum',
-      is_running: true,
-      performance_stats: {
-        win_rate: 73.5,
-        total_trades: 142,
-        total_pnl: 2847.32,
-        avg_trade_duration: '2h 15m'
-      },
-      config: {}
-    },
-    {
-      id: '2',
-      name: 'DCA Master',
-      bot_type: 'dca',
-      is_running: false,
-      performance_stats: {
-        win_rate: 68.2,
-        total_trades: 89,
-        total_pnl: 1523.18,
-        avg_trade_duration: '1d 4h'
-      },
-      config: {}
-    },
-    {
-      id: '3',
-      name: 'Grid Trader Pro',
-      bot_type: 'grid',
-      is_running: true,
-      performance_stats: {
-        win_rate: 81.3,
-        total_trades: 267,
-        total_pnl: 4156.77,
-        avg_trade_duration: '45m'
-      },
-      config: {}
-    }
-  ];
 
   // Generate mock price data for charts
   const generateMockPriceData = (basePrice: number) => {
@@ -101,20 +64,27 @@ export const TradingDashboard: React.FC = () => {
     action();
   };
 
+  const emergencyStopAll = () => {
+    requireAuth(() => {
+      console.log('🚨 EMERGENCY STOP ALL BOTS ACTIVATED');
+      // In real implementation, this would stop all active bots
+    });
+  };
+
   return (
     <div className="p-6 space-y-6 bg-gray-900 min-h-screen">
       {/* Emergency Stop Button */}
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-white">CryptoAI Trading Platform</h1>
+        <h1 className="text-3xl font-bold text-white">Ultimate CryptoAI Trading Platform</h1>
         <div className="flex items-center gap-4">
           <Button
             variant="destructive"
             size="lg"
-            className="bg-red-600 hover:bg-red-700 text-white font-bold"
-            onClick={() => requireAuth(() => console.log('Emergency stop all bots'))}
+            className="bg-red-600 hover:bg-red-700 text-white font-bold animate-pulse"
+            onClick={emergencyStopAll}
           >
             <AlertTriangle className="h-5 w-5 mr-2" />
-            EMERGENCY STOP
+            🚨 EMERGENCY STOP ALL
           </Button>
           {!user && (
             <Button
@@ -129,88 +99,126 @@ export const TradingDashboard: React.FC = () => {
 
       {/* Top Market Overview */}
       <MarketOverview />
-      
-      {/* Main Trading Interface */}
-      <div className="grid grid-cols-12 gap-6">
-        {/* Left Column - Charts and Analysis */}
-        <div className="col-span-8 space-y-6">
-          <AdvancedChart 
-            tradingPairId={selectedPairId}
-            symbol={selectedPair}
-            currentPrice={currentPrice}
-            priceData={priceData}
-          />
-          <LiquidityMap tradingPairId={selectedPairId} />
-        </div>
-        
-        {/* Right Column - Trading Panel and Order Book */}
-        <div className="col-span-4 space-y-6">
-          <TradingPanel 
-            selectedPair={selectedPair}
-            onPairChange={setSelectedPair}
-            requireAuth={requireAuth}
-          />
-          <OrderBook tradingPairId={selectedPairId} />
-        </div>
-      </div>
-      
-      {/* AI Trading Bots Section */}
-      {user && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-              <Bot className="h-6 w-6 text-blue-400" />
-              AI Trading Bots
-            </h2>
-            <Button 
-              className="bg-blue-600 hover:bg-blue-700"
-              onClick={() => console.log('Create new bot')}
-            >
-              <Bot className="h-4 w-4 mr-2" />
-              Create Bot
-            </Button>
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {mockBots.map((bot) => (
-              <AITradingBot key={bot.id} bot={bot} />
-            ))}
-          </div>
-        </div>
-      )}
-      
-      {/* Bottom Row - Portfolio, Signals, AI */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <PortfolioOverview requireAuth={requireAuth} />
-        <LiveSignals />
-        <AIInsights />
-      </div>
 
-      {/* Real-time Audit Log */}
+      {/* Main Navigation Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-6 bg-gray-800">
+          <TabsTrigger value="trading" className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4" />
+            Trading
+          </TabsTrigger>
+          <TabsTrigger value="bots" className="flex items-center gap-2">
+            <Bot className="h-4 w-4" />
+            AI Bots
+          </TabsTrigger>
+          <TabsTrigger value="accounts" className="flex items-center gap-2">
+            <Wallet className="h-4 w-4" />
+            Accounts
+          </TabsTrigger>
+          <TabsTrigger value="social" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            Social
+          </TabsTrigger>
+          <TabsTrigger value="audit" className="flex items-center gap-2">
+            <Shield className="h-4 w-4" />
+            Audit
+          </TabsTrigger>
+          <TabsTrigger value="settings" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            Settings
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="trading" className="space-y-6">
+          {/* Main Trading Interface */}
+          <div className="grid grid-cols-12 gap-6">
+            {/* Left Column - Charts and Analysis */}
+            <div className="col-span-8 space-y-6">
+              <AdvancedChart 
+                tradingPairId={selectedPairId}
+                symbol={selectedPair}
+                currentPrice={currentPrice}
+                priceData={priceData}
+              />
+              <LiquidityMap tradingPairId={selectedPairId} />
+            </div>
+            
+            {/* Right Column - Trading Panel and Order Book */}
+            <div className="col-span-4 space-y-6">
+              <TradingPanel 
+                selectedPair={selectedPair}
+                onPairChange={setSelectedPair}
+                requireAuth={requireAuth}
+              />
+              <OrderBook tradingPairId={selectedPairId} />
+            </div>
+          </div>
+          
+          {/* Bottom Row - Portfolio, Signals, AI */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <PortfolioOverview requireAuth={requireAuth} />
+            <LiveSignals />
+            <AIInsights />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="bots" className="space-y-6">
+          <AdvancedBotManager />
+        </TabsContent>
+
+        <TabsContent value="accounts" className="space-y-6">
+          <AccountManager />
+        </TabsContent>
+
+        <TabsContent value="social" className="space-y-6">
+          <SocialTrading />
+        </TabsContent>
+
+        <TabsContent value="audit" className="space-y-6">
+          <AuditTrail />
+        </TabsContent>
+
+        <TabsContent value="settings" className="space-y-6">
+          <Card className="bg-gray-900 border-gray-700">
+            <CardHeader>
+              <CardTitle className="text-white">Platform Settings</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center text-gray-400 py-8">
+                Settings panel coming soon...
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Real-time System Status */}
       {user && (
         <Card className="bg-gray-900 border-gray-700">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
               <Zap className="h-5 w-5 text-yellow-400" />
-              Live Audit Trail
+              Live System Status
+              <Badge className="bg-green-600 text-white animate-pulse">ALL SYSTEMS OPERATIONAL</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2 max-h-40 overflow-y-auto">
-              <div className="flex justify-between text-xs">
-                <span className="text-gray-300">Bot "Momentum Hunter" executed BUY order</span>
-                <span className="text-gray-400">2s ago</span>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-300">Market Data Feed:</span>
+                <Badge className="bg-green-600 text-white">LIVE</Badge>
               </div>
-              <div className="flex justify-between text-xs">
-                <span className="text-gray-300">Portfolio rebalanced: +$247.83</span>
-                <span className="text-gray-400">15s ago</span>
+              <div className="flex justify-between">
+                <span className="text-gray-300">AI Signal Engine:</span>
+                <Badge className="bg-green-600 text-white">ACTIVE</Badge>
               </div>
-              <div className="flex justify-between text-xs">
-                <span className="text-gray-300">Liquidity zone updated: BTC resistance at $43,500</span>
-                <span className="text-gray-400">32s ago</span>
+              <div className="flex justify-between">
+                <span className="text-gray-300">Trading Bots:</span>
+                <Badge className="bg-blue-600 text-white">6 RUNNING</Badge>
               </div>
-              <div className="flex justify-between text-xs">
-                <span className="text-gray-300">AI signal: STRONG BUY ETH (94% confidence)</span>
-                <span className="text-gray-400">1m ago</span>
+              <div className="flex justify-between">
+                <span className="text-gray-300">Audit Logger:</span>
+                <Badge className="bg-green-600 text-white">RECORDING</Badge>
               </div>
             </div>
           </CardContent>

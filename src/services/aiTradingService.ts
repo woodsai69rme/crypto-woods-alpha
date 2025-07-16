@@ -14,6 +14,7 @@ export interface AISignalRequest {
 }
 
 export interface TradingBotConfig {
+  [key: string]: any;
   strategy_type: 'momentum' | 'dca' | 'grid' | 'arbitrage' | 'ml_predictor' | 'sentiment';
   risk_level: 'low' | 'medium' | 'high';
   max_position_size: number;
@@ -39,7 +40,7 @@ export class AITradingService {
         user_id: user.user.id,
         name,
         bot_type,
-        config,
+        config: config as any,
         strategy_id,
         trading_account_id,
         is_running: false,
@@ -73,7 +74,7 @@ export class AITradingService {
   ): Promise<number> {
     // Advanced probability calculation based on multiple factors
     try {
-      const [marketData, liquidityZones, fibLevels] = await Promise.all([
+      const [marketData, liquidityZones, fibLevelsData] = await Promise.all([
         supabase
           .from('market_data_live')
           .select('*')
@@ -117,8 +118,8 @@ export class AITradingService {
       }
 
       // Factor 2: Fibonacci level analysis
-      if (fibLevels.data && fibLevels.data.length > 0) {
-        const latestFib = fibLevels.data[0];
+      if (fibLevelsData.data && fibLevelsData.data.length > 0) {
+        const latestFib = fibLevelsData.data[0];
         const fibLevels = [
           Number(latestFib.level_236),
           Number(latestFib.level_382),
@@ -138,7 +139,6 @@ export class AITradingService {
 
       // Factor 3: Volume and momentum analysis
       const priceChange24h = Number(marketData.data.price_change_24h);
-      const volume24h = Number(marketData.data.volume_24h);
       
       if (priceChange24h > 0 && direction === 'long') {
         probability += Math.min(priceChange24h / 100, 0.2); // Max 20% boost
