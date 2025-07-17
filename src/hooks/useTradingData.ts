@@ -2,6 +2,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
+import { CryptoDataService } from '@/services/cryptoDataService';
 
 export const useTradingPairs = () => {
   return useQuery({
@@ -17,6 +18,48 @@ export const useTradingPairs = () => {
       return data;
     },
   });
+};
+
+export const useRealTimeMarketData = (symbols: string[]) => {
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
+    queryKey: ['real-time-market-data', symbols],
+    queryFn: async () => {
+      // Fetch from multiple sources and aggregate
+      return await CryptoDataService.getAggregatedPrices(symbols);
+    },
+    enabled: symbols.length > 0,
+    refetchInterval: 5000, // Refresh every 5 seconds
+  });
+
+  // Set up WebSocket for real-time updates
+  useEffect(() => {
+    if (symbols.length > 0) {
+      CryptoDataService.connectBinanceWebSocket(symbols, (priceUpdate) => {
+        queryClient.setQueryData(['real-time-market-data', symbols], (oldData: any) => {
+          if (!oldData) return [priceUpdate];
+          
+          const updated = oldData.map((price: any) => 
+            price.symbol === priceUpdate.symbol ? priceUpdate : price
+          );
+          
+          // Add new symbol if not exists
+          if (!updated.find((p: any) => p.symbol === priceUpdate.symbol)) {
+            updated.push(priceUpdate);
+          }
+          
+          return updated;
+        });
+      });
+    }
+
+    return () => {
+      CryptoDataService.disconnectAll();
+    };
+  }, [symbols, queryClient]);
+
+  return query;
 };
 
 export const useMarketData = (tradingPairId?: string) => {
@@ -82,6 +125,7 @@ export const useOrderBook = (tradingPairId: string) => {
   const query = useQuery({
     queryKey: ['order-book', tradingPairId],
     queryFn: async () => {
+      // First try to get from database
       const { data, error } = await supabase
         .from('order_book_entries')
         .select('*')
@@ -93,6 +137,24 @@ export const useOrderBook = (tradingPairId: string) => {
       
       const bids = data.filter(entry => entry.side === 'buy').slice(0, 10);
       const asks = data.filter(entry => entry.side === 'sell').slice(0, 10);
+      
+      // If no data in database, fetch from live API
+      if (bids.length === 0 && asks.length === 0) {
+        // Get trading pair symbol
+        const { data: pairData } = await supabase
+          .from('trading_pairs')
+          .select('symbol')
+          .eq('id', tradingPairId)
+          .single();
+        
+        if (pairData) {
+          const orderBook = await CryptoDataService.getBinanceOrderBook(pairData.symbol);
+          return {
+            bids: orderBook.bids.map(([price, quantity]) => ({ price, quantity, side: 'buy' })),
+            asks: orderBook.asks.map(([price, quantity]) => ({ price, quantity, side: 'sell' }))
+          };
+        }
+      }
       
       return { bids, asks };
     },
@@ -216,4 +278,59 @@ export const useAISignals = () => {
   }, [queryClient]);
 
   return query;
+};
+
+export const useTransactionHistory = () => {
+  return useQuery({
+    queryKey: ['transaction-history'],
+    queryFn: async () => {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) return [];
+
+      // Get orders
+      const { data: orders } = await supabase
+        .from('user_orders')
+        .select(`
+          *,
+          trading_pairs (symbol, base_asset, quote_asset),
+          trading_accounts (exchange, account_type)
+        `)
+        .eq('user_id', user.user.id)
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      // Get executions
+      const { data: executions } = await supabase
+        .from('trade_executions')
+        .select(`
+          *,
+          trading_pairs (symbol, base_asset, quote_asset)
+        `)
+        .eq('user_id', user.user.id)
+        .order('executed_at', { ascending: false })
+        .limit(100);
+
+      return { orders: orders || [], executions: executions || [] };
+    },
+  });
+};
+
+export const useAuditLogs = (limit: number = 100) => {
+  return useQuery({
+    queryKey: ['audit-logs', limit],
+    queryFn: async () => {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) return [];
+
+      const { data, error } = await supabase
+        .from('audit_logs')
+        .select('*')
+        .eq('user_id', user.user.id)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+      return data;
+    },
+  });
 };
