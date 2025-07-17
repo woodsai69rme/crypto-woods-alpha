@@ -29,7 +29,12 @@ export const AdvancedChart: React.FC<AdvancedChartProps> = ({
 
   const timeframes = ['1m', '5m', '15m', '1h', '4h', '1d'];
 
-  const formatPrice = (value: number) => `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}`;
+  const formatPrice = (value: number | undefined | null) => {
+    if (value === undefined || value === null || isNaN(value)) {
+      return '$0.00';
+    }
+    return `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}`;
+  };
 
   const getFibonacciColor = (level: string) => {
     const colors = {

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AdvancedChart } from "@/components/trading/AdvancedChart";
@@ -22,6 +23,22 @@ import { Switch } from "@/components/ui/switch";
 
 export const TradingDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState("trading");
+  const [selectedPair, setSelectedPair] = useState("BTC/USDT");
+
+  // Mock data for components
+  const mockTradingPairId = "1";
+  const mockCurrentPrice = 43250.00;
+  const mockPriceData = [
+    { timestamp: "09:00", price: 43100 },
+    { timestamp: "09:05", price: 43150 },
+    { timestamp: "09:10", price: 43200 },
+    { timestamp: "09:15", price: 43250 },
+    { timestamp: "09:20", price: 43300 },
+  ];
+
+  const handlePairChange = (pair: string) => {
+    setSelectedPair(pair);
+  };
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
@@ -50,12 +67,21 @@ export const TradingDashboard: React.FC = () => {
           <TabsContent value="trading" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 space-y-6">
-                <AdvancedChart />
-                <TradingPanel />
+                <AdvancedChart 
+                  tradingPairId={mockTradingPairId}
+                  symbol={selectedPair}
+                  currentPrice={mockCurrentPrice}
+                  priceData={mockPriceData}
+                />
+                <TradingPanel 
+                  selectedPair={selectedPair}
+                  onPairChange={handlePairChange}
+                  requireAuth={true}
+                />
               </div>
               <div className="space-y-6">
                 <MarketOverview />
-                <OrderBook />
+                <OrderBook tradingPairId={mockTradingPairId} />
                 <LiveSignals />
               </div>
             </div>
