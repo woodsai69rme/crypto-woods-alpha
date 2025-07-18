@@ -41,7 +41,7 @@ export const RealTimeDataFeed: React.FC = () => {
     setIsRefreshing(true);
     try {
       // Fetch from CoinGecko
-      const coinGeckoData = await CryptoDataService.getCoinGeckoPrice(symbols);
+      const coinGeckoData = await CryptoDataService.getCoinGeckoPrices(symbols);
       if (coinGeckoData && coinGeckoData.length > 0) {
         setPriceData(prev => {
           const updated = [...prev];
@@ -70,7 +70,7 @@ export const RealTimeDataFeed: React.FC = () => {
       }
 
       // Fetch from CoinCap
-      const coinCapData = await CryptoDataService.getCoinCapPrice(symbols);
+      const coinCapData = await CryptoDataService.getCoinCapPrices(symbols);
       if (coinCapData && coinCapData.length > 0) {
         setPriceData(prev => {
           const updated = [...prev];
@@ -99,7 +99,7 @@ export const RealTimeDataFeed: React.FC = () => {
       }
 
       // Fetch from Binance
-      const binanceData = await CryptoDataService.getBinancePrice(['BTCUSDT', 'ETHUSDT', 'BNBUSDT']);
+      const binanceData = await CryptoDataService.getBinancePrices(['BTCUSDT', 'ETHUSDT', 'BNBUSDT']);
       if (binanceData && binanceData.length > 0) {
         setPriceData(prev => {
           const updated = [...prev];
@@ -107,35 +107,6 @@ export const RealTimeDataFeed: React.FC = () => {
             const existingIndex = updated.findIndex(p => p.symbol === data.symbol && p.source === 'Binance');
             const newPrice: RealTimePrice = {
               source: 'Binance',
-              symbol: data.symbol,
-              price: data.price,
-              change24h: data.change24h,
-              volume: data.volume24h || 0,
-              marketCap: data.marketCap || 0,
-              high24h: data.high24h || data.price,
-              low24h: data.low24h || data.price,
-              timestamp: new Date().toISOString(),
-            };
-            
-            if (existingIndex >= 0) {
-              updated[existingIndex] = newPrice;
-            } else {
-              updated.push(newPrice);
-            }
-          });
-          return updated;
-        });
-      }
-
-      // Fetch from CryptoCompare
-      const cryptoCompareData = await CryptoDataService.getCryptoComparePrice(['BTC', 'ETH', 'BNB']);
-      if (cryptoCompareData && cryptoCompareData.length > 0) {
-        setPriceData(prev => {
-          const updated = [...prev];
-          cryptoCompareData.forEach(data => {
-            const existingIndex = updated.findIndex(p => p.symbol === data.symbol && p.source === 'CryptoCompare');
-            const newPrice: RealTimePrice = {
-              source: 'CryptoCompare',
               symbol: data.symbol,
               price: data.price,
               change24h: data.change24h,

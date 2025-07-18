@@ -16,6 +16,7 @@ import { SocialTrading } from "@/components/trading/SocialTrading";
 import { AuditTrail } from "@/components/trading/AuditTrail";
 import { RealTimeDataFeed } from "@/components/trading/RealTimeDataFeed";
 import { TransactionHistory } from "@/components/trading/TransactionHistory";
+import { PortfolioOverview } from "@/components/trading/PortfolioOverview";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -76,13 +77,13 @@ export const TradingDashboard: React.FC = () => {
                 <TradingPanel 
                   selectedPair={selectedPair}
                   onPairChange={handlePairChange}
-                  requireAuth={true}
                 />
               </div>
               <div className="space-y-6">
                 <MarketOverview />
                 <OrderBook tradingPairId={mockTradingPairId} />
                 <LiveSignals />
+                <PortfolioOverview />
               </div>
             </div>
           </TabsContent>
