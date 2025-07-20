@@ -41,6 +41,13 @@ export const TradingDashboard: React.FC = () => {
     setSelectedPair(pair);
   };
 
+  // Mock requireAuth function for demo purposes
+  const requireAuth = (action: () => void) => {
+    // In a real app, this would check authentication and possibly show a login dialog
+    console.log('Auth required for action');
+    action(); // For demo, just execute the action
+  };
+
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       <div className="container mx-auto p-6">
@@ -77,6 +84,7 @@ export const TradingDashboard: React.FC = () => {
                 <TradingPanel 
                   selectedPair={selectedPair}
                   onPairChange={handlePairChange}
+                  requireAuth={requireAuth}
                 />
               </div>
               <div className="space-y-6">
