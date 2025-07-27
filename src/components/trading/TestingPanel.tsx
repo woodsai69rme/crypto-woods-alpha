@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -74,7 +73,7 @@ export const TestingPanel: React.FC = () => {
     // Update all suites to running status
     setTestSuites(prev => prev.map(suite => ({
       ...suite,
-      status: 'running'
+      status: 'running' as const
     })));
 
     // Simulate test execution
@@ -88,7 +87,7 @@ export const TestingPanel: React.FC = () => {
           
           return {
             ...suite,
-            status: hasFailures ? 'failed' : hasWarnings ? 'warning' : 'passed'
+            status: hasFailures ? 'failed' as const : 'passed' as const
           };
         }
         return suite;
@@ -100,7 +99,7 @@ export const TestingPanel: React.FC = () => {
 
   const runSuite = async (suiteName: string) => {
     setTestSuites(prev => prev.map(suite => 
-      suite.name === suiteName ? { ...suite, status: 'running' } : suite
+      suite.name === suiteName ? { ...suite, status: 'running' as const } : suite
     ));
 
     await new Promise(resolve => setTimeout(resolve, 2000));
@@ -112,7 +111,7 @@ export const TestingPanel: React.FC = () => {
         
         return {
           ...suite,
-          status: hasFailures ? 'failed' : hasWarnings ? 'warning' : 'passed'
+          status: hasFailures ? 'failed' as const : 'passed' as const
         };
       }
       return suite;

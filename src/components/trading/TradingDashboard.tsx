@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AdvancedChart } from "@/components/trading/AdvancedChart";
@@ -17,6 +16,8 @@ import { AuditTrail } from "@/components/trading/AuditTrail";
 import { RealTimeDataFeed } from "@/components/trading/RealTimeDataFeed";
 import { TransactionHistory } from "@/components/trading/TransactionHistory";
 import { PortfolioOverview } from "@/components/trading/PortfolioOverview";
+import { TestingPanel } from "@/components/trading/TestingPanel";
+import { SystemHealthMonitor } from "@/components/trading/SystemHealthMonitor";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -138,7 +139,7 @@ export const TradingDashboard: React.FC = () => {
             <TabsTrigger value="social">Social</TabsTrigger>
             <TabsTrigger value="audit">Audit</TabsTrigger>
             <TabsTrigger value="data">Real Data</TabsTrigger>
-            <TabsTrigger value="transactions">Transactions</TabsTrigger>
+            <TabsTrigger value="testing">Testing</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
@@ -162,6 +163,7 @@ export const TradingDashboard: React.FC = () => {
                 <OrderBook tradingPairId={mockTradingPairId} />
                 <LiveSignals />
                 <PortfolioOverview />
+                <SystemHealthMonitor />
               </div>
             </div>
           </TabsContent>
@@ -230,8 +232,8 @@ export const TradingDashboard: React.FC = () => {
             <RealTimeDataFeed />
           </TabsContent>
 
-          <TabsContent value="transactions">
-            <TransactionHistory />
+          <TabsContent value="testing">
+            <TestingPanel />
           </TabsContent>
 
           <TabsContent value="settings">
