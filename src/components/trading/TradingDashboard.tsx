@@ -19,6 +19,9 @@ import { PortfolioOverview } from "@/components/trading/PortfolioOverview";
 import { TestingPanel } from "@/components/trading/TestingPanel";
 import { SystemHealthMonitor } from "@/components/trading/SystemHealthMonitor";
 import { RealTradingComplianceWarning } from "@/components/trading/RealTradingComplianceWarning";
+import { SandboxTradingPanel } from "@/components/trading/SandboxTradingPanel";
+import { SecurityHardeningPanel } from "@/components/trading/SecurityHardeningPanel";
+import { CompliancePlanningPanel } from "@/components/trading/CompliancePlanningPanel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -141,7 +144,9 @@ export const TradingDashboard: React.FC = () => {
             <TabsTrigger value="audit">Audit</TabsTrigger>
             <TabsTrigger value="data">Real Data</TabsTrigger>
             <TabsTrigger value="testing">Testing</TabsTrigger>
-            <TabsTrigger value="compliance">Real Trading</TabsTrigger>
+            <TabsTrigger value="sandbox">Sandbox</TabsTrigger>
+            <TabsTrigger value="security">Security</TabsTrigger>
+            <TabsTrigger value="compliance">Compliance</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
@@ -238,8 +243,19 @@ export const TradingDashboard: React.FC = () => {
             <TestingPanel />
           </TabsContent>
 
+          <TabsContent value="sandbox">
+            <SandboxTradingPanel />
+          </TabsContent>
+
+          <TabsContent value="security">
+            <SecurityHardeningPanel />
+          </TabsContent>
+
           <TabsContent value="compliance">
-            <RealTradingComplianceWarning />
+            <div className="space-y-6">
+              <RealTradingComplianceWarning />
+              <CompliancePlanningPanel />
+            </div>
           </TabsContent>
 
           <TabsContent value="settings">
