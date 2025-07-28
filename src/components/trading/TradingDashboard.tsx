@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { ErrorBoundary } from "@/components/trading/ErrorBoundary";
 import { Settings, Shield, Activity, TrendingUp, AlertTriangle } from "lucide-react";
 
 export const TradingDashboard: React.FC = () => {
@@ -49,8 +50,8 @@ export const TradingDashboard: React.FC = () => {
     return () => clearInterval(healthInterval);
   }, []);
 
-  // Mock data for components
-  const mockTradingPairId = "1";
+  // Mock data for components - using valid UUID format
+  const mockTradingPairId = "680c340f-4bdf-42a6-9896-18c3acdfd04b"; // Valid BTC/USDT UUID
   const mockCurrentPrice = 43250.00;
   const mockPriceData = [
     { timestamp: "09:00", price: 43100 },
@@ -107,7 +108,8 @@ export const TradingDashboard: React.FC = () => {
   };
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'bg-gray-950' : 'bg-gray-50'} text-white`}>
+    <ErrorBoundary>
+      <div className={`min-h-screen ${darkMode ? 'bg-gray-950' : 'bg-gray-50'} text-white`}>
       <div className="container mx-auto p-6">
         {/* Header with System Status */}
         <div className="mb-6">
@@ -349,5 +351,6 @@ export const TradingDashboard: React.FC = () => {
         </Tabs>
       </div>
     </div>
+    </ErrorBoundary>
   );
 };

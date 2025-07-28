@@ -74,6 +74,11 @@ export class AITradingService {
   ): Promise<number> {
     // Advanced probability calculation based on multiple factors
     try {
+      // Validate UUID format first
+      if (!trading_pair_id || !trading_pair_id.includes('-') || trading_pair_id.length !== 36) {
+        console.warn('Invalid trading pair ID for probability calculation:', trading_pair_id);
+        return 0.5; // Return neutral probability for invalid IDs
+      }
       const [marketData, liquidityZones, fibLevelsData] = await Promise.all([
         supabase
           .from('market_data_live')
@@ -155,6 +160,12 @@ export class AITradingService {
   }
 
   static async analyzeLiquidityTargets(trading_pair_id: string) {
+    // Validate UUID format first
+    if (!trading_pair_id || !trading_pair_id.includes('-') || trading_pair_id.length !== 36) {
+      console.warn('Invalid trading pair ID for liquidity analysis:', trading_pair_id);
+      return []; // Return empty array for invalid IDs
+    }
+
     const { data, error } = await supabase
       .from('liquidity_zones')
       .select('*')

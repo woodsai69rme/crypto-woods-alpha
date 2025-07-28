@@ -1,3 +1,5 @@
+// Error reporting utility for tracking and managing application errors
+
 export interface ErrorReport {
   message: string;
   stack?: string;
@@ -9,7 +11,7 @@ export interface ErrorReport {
   additionalData?: Record<string, any>;
 }
 
-export class ErrorReporting {
+class ErrorReporting {
   private static instance: ErrorReporting;
   private errorQueue: ErrorReport[] = [];
   private isOnline = navigator.onLine;
@@ -20,24 +22,12 @@ export class ErrorReporting {
       this.isOnline = true;
       this.flushErrorQueue();
     });
-
+    
     window.addEventListener('offline', () => {
       this.isOnline = false;
     });
 
-    // Set up global error handlers
-    this.setupGlobalErrorHandlers();
-  }
-
-  static getInstance(): ErrorReporting {
-    if (!ErrorReporting.instance) {
-      ErrorReporting.instance = new ErrorReporting();
-    }
-    return ErrorReporting.instance;
-  }
-
-  private setupGlobalErrorHandlers() {
-    // Handle JavaScript errors
+    // Global error handler
     window.addEventListener('error', (event) => {
       this.reportError({
         message: event.message,
@@ -45,7 +35,7 @@ export class ErrorReporting {
         timestamp: new Date().toISOString(),
         url: window.location.href,
         userAgent: navigator.userAgent,
-        component: 'Global Error Handler',
+        component: 'Global',
         additionalData: {
           filename: event.filename,
           lineno: event.lineno,
@@ -54,7 +44,7 @@ export class ErrorReporting {
       });
     });
 
-    // Handle unhandled promise rejections
+    // Unhandled promise rejection handler
     window.addEventListener('unhandledrejection', (event) => {
       this.reportError({
         message: `Unhandled Promise Rejection: ${event.reason}`,
@@ -62,7 +52,7 @@ export class ErrorReporting {
         timestamp: new Date().toISOString(),
         url: window.location.href,
         userAgent: navigator.userAgent,
-        component: 'Promise Rejection Handler',
+        component: 'Promise',
         additionalData: {
           reason: event.reason,
         },
@@ -70,97 +60,124 @@ export class ErrorReporting {
     });
   }
 
-  reportError(error: ErrorReport) {
+  public static getInstance(): ErrorReporting {
+    if (!ErrorReporting.instance) {
+      ErrorReporting.instance = new ErrorReporting();
+    }
+    return ErrorReporting.instance;
+  }
+
+  public reportError(error: ErrorReport): void {
     console.error('Error reported:', error);
-
-    // Add to queue
+    
     this.errorQueue.push(error);
-
-    // Try to send immediately if online
+    this.persistError(error);
+    
     if (this.isOnline) {
       this.flushErrorQueue();
     }
-
-    // Store in localStorage for persistence
-    this.persistError(error);
   }
 
-  private async flushErrorQueue() {
+  private async flushErrorQueue(): Promise<void> {
     if (this.errorQueue.length === 0) return;
 
     const errorsToSend = [...this.errorQueue];
     this.errorQueue = [];
 
     try {
-      // In a real app, this would send to your error tracking service
-      // For now, we'll just log to console and store in audit system
       for (const error of errorsToSend) {
         await this.sendErrorToService(error);
       }
     } catch (sendError) {
       console.error('Failed to send errors:', sendError);
-      // Re-add errors to queue for retry
+      // Put errors back in queue if sending failed
       this.errorQueue.unshift(...errorsToSend);
     }
   }
 
-  private async sendErrorToService(error: ErrorReport) {
-    // Simulate sending to error tracking service
-    console.log('Sending error to service:', error);
+  private async sendErrorToService(error: ErrorReport): Promise<void> {
+    // In a real application, this would send to an error tracking service
+    // like Sentry, LogRocket, Bugsnag, etc.
     
-    // In a real implementation, you would send to services like:
-    // - Sentry
-    // - LogRocket
-    // - Bugsnag
-    // - Your own error tracking API
-    
-    // For now, we'll store in localStorage as a mock
-    const existingErrors = JSON.parse(localStorage.getItem('errorReports') || '[]');
-    existingErrors.push(error);
-    
-    // Keep only last 100 errors
-    if (existingErrors.length > 100) {
-      existingErrors.splice(0, existingErrors.length - 100);
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // For now, just store in localStorage as a fallback
+      const storedErrors = this.getStoredErrors();
+      storedErrors.push(error);
+      localStorage.setItem('error_reports', JSON.stringify(storedErrors.slice(-50))); // Keep last 50 errors
+      
+      console.log('Error sent to service:', error.message);
+    } catch (serviceError) {
+      console.error('Error service unavailable:', serviceError);
+      throw serviceError;
     }
-    
-    localStorage.setItem('errorReports', JSON.stringify(existingErrors));
   }
 
-  private persistError(error: ErrorReport) {
+  private persistError(error: ErrorReport): void {
     try {
-      const existingErrors = JSON.parse(localStorage.getItem('pendingErrors') || '[]');
-      existingErrors.push(error);
-      
-      // Keep only last 50 pending errors
-      if (existingErrors.length > 50) {
-        existingErrors.splice(0, existingErrors.length - 50);
-      }
-      
-      localStorage.setItem('pendingErrors', JSON.stringify(existingErrors));
+      const storedErrors = this.getStoredErrors();
+      storedErrors.push(error);
+      localStorage.setItem('error_reports_local', JSON.stringify(storedErrors.slice(-100))); // Keep last 100 errors locally
     } catch (storageError) {
-      console.error('Failed to persist error:', storageError);
+      console.error('Failed to persist error locally:', storageError);
     }
   }
 
-  getStoredErrors(): ErrorReport[] {
+  public getStoredErrors(): ErrorReport[] {
     try {
-      return JSON.parse(localStorage.getItem('errorReports') || '[]');
-    } catch {
+      const stored = localStorage.getItem('error_reports_local');
+      return stored ? JSON.parse(stored) : [];
+    } catch (parseError) {
+      console.error('Failed to parse stored errors:', parseError);
       return [];
     }
   }
 
-  clearStoredErrors() {
-    localStorage.removeItem('errorReports');
-    localStorage.removeItem('pendingErrors');
+  public clearStoredErrors(): void {
+    try {
+      localStorage.removeItem('error_reports_local');
+      localStorage.removeItem('error_reports');
+    } catch (clearError) {
+      console.error('Failed to clear stored errors:', clearError);
+    }
+  }
+
+  public getErrorStats(): { totalErrors: number; recentErrors: number; topErrors: Array<{ message: string; count: number }> } {
+    const errors = this.getStoredErrors();
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    
+    const recentErrors = errors.filter(error => new Date(error.timestamp) > oneHourAgo);
+    
+    // Count error frequency
+    const errorCounts = errors.reduce((acc, error) => {
+      acc[error.message] = (acc[error.message] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    const topErrors = Object.entries(errorCounts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([message, count]) => ({ message, count }));
+
+    return {
+      totalErrors: errors.length,
+      recentErrors: recentErrors.length,
+      topErrors,
+    };
   }
 }
 
 // Export singleton instance
 export const errorReporter = ErrorReporting.getInstance();
 
-// Utility function for manual error reporting
-export const reportError = (error: Error, component?: string, additionalData?: Record<string, any>) => {
+// Convenience function for manual error reporting
+export const reportError = (
+  error: Error, 
+  component?: string, 
+  additionalData?: Record<string, any>
+): void => {
   errorReporter.reportError({
     message: error.message,
     stack: error.stack,
