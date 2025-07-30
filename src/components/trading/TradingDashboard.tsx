@@ -22,6 +22,8 @@ import { RealTradingComplianceWarning } from "@/components/trading/RealTradingCo
 import { SandboxTradingPanel } from "@/components/trading/SandboxTradingPanel";
 import { SecurityHardeningPanel } from "@/components/trading/SecurityHardeningPanel";
 import { CompliancePlanningPanel } from "@/components/trading/CompliancePlanningPanel";
+import { EnhancedAIBotManager } from "@/components/trading/EnhancedAIBotManager";
+import { SystemStatusPanel } from "@/components/trading/SystemStatusPanel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,8 +52,10 @@ export const TradingDashboard: React.FC = () => {
     return () => clearInterval(healthInterval);
   }, []);
 
-  // Mock data for components - using valid UUID format
-  const mockTradingPairId = "680c340f-4bdf-42a6-9896-18c3acdfd04b"; // Valid BTC/USDT UUID
+  // Real trading pair IDs from database
+  const btcUsdtPairId = "680c340f-4bdf-42a6-9896-18c3acdfd04b"; // BTC/USDT
+  const ethUsdtPairId = "effd366b-a45d-4fa9-936f-350f8c0fece4"; // ETH/USDT
+  const [selectedPairId, setSelectedPairId] = useState(btcUsdtPairId);
   const mockCurrentPrice = 43250.00;
   const mockPriceData = [
     { timestamp: "09:00", price: 43100 },
@@ -63,6 +67,11 @@ export const TradingDashboard: React.FC = () => {
 
   const handlePairChange = (pair: string) => {
     setSelectedPair(pair);
+    // Set the correct pair ID based on symbol
+    const pairId = pair === "BTC/USDT" ? btcUsdtPairId : 
+                   pair === "ETH/USDT" ? ethUsdtPairId : 
+                   btcUsdtPairId; // Default to BTC/USDT
+    setSelectedPairId(pairId);
     toast({
       title: "Trading Pair Changed",
       description: `Switched to ${pair}`,
@@ -156,7 +165,7 @@ export const TradingDashboard: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 space-y-6">
                 <AdvancedChart 
-                  tradingPairId={mockTradingPairId}
+                  tradingPairId={selectedPairId}
                   symbol={selectedPair}
                   currentPrice={mockCurrentPrice}
                   priceData={mockPriceData}
@@ -169,7 +178,7 @@ export const TradingDashboard: React.FC = () => {
               </div>
               <div className="space-y-6">
                 <MarketOverview />
-                <OrderBook tradingPairId={mockTradingPairId} />
+                <OrderBook tradingPairId={selectedPairId} />
                 <LiveSignals />
                 <PortfolioOverview />
                 <SystemHealthMonitor />
@@ -178,7 +187,11 @@ export const TradingDashboard: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="ai-bots">
-            <AdvancedBotManager />
+            <EnhancedAIBotManager />
+          </TabsContent>
+
+          <TabsContent value="system">
+            <SystemStatusPanel />
           </TabsContent>
 
           <TabsContent value="ml-ai">
