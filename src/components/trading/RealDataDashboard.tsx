@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Activity, 
   TrendingUp, 
@@ -20,6 +21,8 @@ import {
 } from 'lucide-react';
 import { RealMarketDataService } from '@/services/realMarketDataService';
 import { TradingAuditService } from '@/services/tradingAuditService';
+import { RealTradingComplianceWarning } from './RealTradingComplianceWarning';
+import { CompliancePlanningPanel } from './CompliancePlanningPanel';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
@@ -144,24 +147,42 @@ export const RealDataDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Real-Time Market Data */}
-      <Card className="bg-gray-900 border-gray-700">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-xl font-bold text-white flex items-center gap-2">
-            <Activity className="h-5 w-5 text-green-400" />
-            Live Real Market Data
-            {wsConnection && <Badge className="bg-green-600 text-white animate-pulse">LIVE</Badge>}
-          </CardTitle>
-          <Button 
-            onClick={loadRealTimeData} 
-            disabled={isLoadingPrices}
-            variant="outline" 
-            size="sm"
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingPrices ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-        </CardHeader>
+      {/* Critical Warning Banner */}
+      <Alert className="border-red-500 bg-red-50 dark:bg-red-950">
+        <AlertTriangle className="h-4 w-4 text-red-600" />
+        <AlertDescription className="text-red-700 dark:text-red-300 font-medium">
+          🚨 PLATFORM STATUS: Educational/Demo Only - NOT approved for real money trading. 
+          See Compliance tab for requirements.
+        </AlertDescription>
+      </Alert>
+
+      <Tabs defaultValue="data" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="data">Market Data & Audit</TabsTrigger>
+          <TabsTrigger value="compliance">Compliance Assessment</TabsTrigger>
+          <TabsTrigger value="roadmap">Implementation Roadmap</TabsTrigger>
+          <TabsTrigger value="figures">Figure Validation</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="data" className="space-y-6">
+          {/* Real-Time Market Data */}
+          <Card className="bg-gray-900 border-gray-700">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-xl font-bold text-white flex items-center gap-2">
+                <Activity className="h-5 w-5 text-green-400" />
+                Live Real Market Data
+                {wsConnection && <Badge className="bg-green-600 text-white animate-pulse">LIVE</Badge>}
+              </CardTitle>
+              <Button 
+                onClick={loadRealTimeData} 
+                disabled={isLoadingPrices}
+                variant="outline" 
+                size="sm"
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingPrices ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+            </CardHeader>
         
         <CardContent className="space-y-4">
           {/* Data Validation Status */}
@@ -372,8 +393,108 @@ export const RealDataDashboard: React.FC = () => {
               )}
             </div>
           )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+        </TabsContent>
+
+        <TabsContent value="compliance" className="space-y-6">
+          <RealTradingComplianceWarning />
+        </TabsContent>
+
+        <TabsContent value="roadmap" className="space-y-6">
+          <CompliancePlanningPanel />
+        </TabsContent>
+
+        <TabsContent value="figures" className="space-y-6">
+          {/* Enhanced Figure Validation */}
+          <Card className="bg-gray-900 border-gray-700">
+            <CardHeader>
+              <CardTitle className="text-xl font-bold text-white flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-blue-400" />
+                Financial Figure Validation
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {auditResults && auditResults.figureValidation ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {Object.entries(auditResults.figureValidation).map(([category, isValid]) => (
+                      <div key={category} className="bg-gray-800 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-white font-medium">
+                            {category.replace('_', ' ').toUpperCase()}
+                          </span>
+                          {isValid ? (
+                            <CheckCircle className="h-5 w-5 text-green-500" />
+                          ) : (
+                            <XCircle className="h-5 w-5 text-red-500" />
+                          )}
+                        </div>
+                        <Badge className={isValid ? 'bg-green-600' : 'bg-red-600'}>
+                          {isValid ? 'VALIDATED' : 'ERRORS FOUND'}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Summary Statistics */}
+                  {auditResults.portfolioAudit && (
+                    <div className="bg-gray-800 rounded-lg p-4 mt-6">
+                      <h4 className="text-lg font-semibold text-white mb-4">Validated Calculations</h4>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-green-400">
+                            ${auditResults.portfolioAudit.totalValue?.toFixed(2) || '0.00'}
+                          </div>
+                          <div className="text-xs text-gray-400">Portfolio Value</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-blue-400">
+                            ${auditResults.portfolioAudit.totalInvested?.toFixed(2) || '0.00'}
+                          </div>
+                          <div className="text-xs text-gray-400">Total Invested</div>
+                        </div>
+                        <div className="text-center">
+                          <div className={`text-2xl font-bold ${
+                            (auditResults.portfolioAudit.totalPnL || 0) >= 0 ? 'text-green-400' : 'text-red-400'
+                          }`}>
+                            ${auditResults.portfolioAudit.totalPnL?.toFixed(2) || '0.00'}
+                          </div>
+                          <div className="text-xs text-gray-400">Total P&L</div>
+                        </div>
+                        <div className="text-center">
+                          <div className={`text-2xl font-bold ${
+                            (auditResults.portfolioAudit.pnlPercentage || 0) >= 0 ? 'text-green-400' : 'text-red-400'
+                          }`}>
+                            {auditResults.portfolioAudit.pnlPercentage?.toFixed(2) || '0.00'}%
+                          </div>
+                          <div className="text-xs text-gray-400">P&L Percentage</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-600" />
+                  <h3 className="text-lg font-bold text-white mb-2">No Validation Data</h3>
+                  <p className="text-gray-400 mb-4">
+                    Run the trading audit to validate all financial figures and calculations.
+                  </p>
+                  <Button 
+                    onClick={runTradingAudit} 
+                    disabled={isRunningAudit || !user?.id}
+                    variant="outline"
+                  >
+                    <BarChart3 className={`h-4 w-4 mr-2 ${isRunningAudit ? 'animate-spin' : ''}`} />
+                    {isRunningAudit ? 'Validating...' : 'Validate Figures'}
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
