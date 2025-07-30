@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { TrendingUp, TrendingDown, Activity } from 'lucide-react';
+import { RealMarketDataService } from '@/services/realMarketDataService';
 
 interface MarketData {
   symbol: string;
@@ -13,27 +14,73 @@ interface MarketData {
 }
 
 export const MarketOverview: React.FC = () => {
-  const [marketData, setMarketData] = useState<MarketData[]>([
-    { symbol: 'BTC', price: 43250.00, change24h: -2.34, volume: '$28.5B', marketCap: '$847B' },
-    { symbol: 'ETH', price: 2650.50, change24h: 1.23, volume: '$12.3B', marketCap: '$318B' },
-    { symbol: 'BNB', price: 315.75, change24h: -0.87, volume: '$1.8B', marketCap: '$47B' },
-    { symbol: 'XRP', price: 0.6234, change24h: 4.56, volume: '$2.1B', marketCap: '$34B' },
-    { symbol: 'ADA', price: 0.4789, change24h: -1.45, volume: '$890M', marketCap: '$17B' },
-    { symbol: 'SOL', price: 102.34, change24h: 3.21, volume: '$1.5B', marketCap: '$44B' },
-  ]);
+  const [marketData, setMarketData] = useState<MarketData[]>([]);
+  const [isLiveData, setIsLiveData] = useState(false);
 
-  // Simulate real-time updates
   useEffect(() => {
-    const interval = setInterval(() => {
-      setMarketData(prev => prev.map(item => ({
-        ...item,
-        price: item.price * (1 + (Math.random() - 0.5) * 0.001),
-        change24h: item.change24h + (Math.random() - 0.5) * 0.1,
-      })));
-    }, 2000);
+    // Initialize with real market data
+    const loadRealData = async () => {
+      try {
+        const { data, validation } = await RealMarketDataService.getRealTimePrices();
+        
+        const formattedData = data.map(price => ({
+          symbol: price.symbol.replace('USDT', ''),
+          price: price.price,
+          change24h: price.change24h,
+          volume: `$${(price.volume24h / 1000000).toFixed(1)}M`,
+          marketCap: `$${(price.price * price.volume24h / price.price / 1000000).toFixed(0)}M` // Approximation
+        }));
 
-    return () => clearInterval(interval);
-  }, []);
+        setMarketData(formattedData);
+        setIsLiveData(validation.confidence > 0.5);
+      } catch (error) {
+        console.error('Failed to load real market data:', error);
+        
+        // Fallback to mock data if real data fails
+        setMarketData([
+          { symbol: 'BTC', price: 43250.00, change24h: -2.34, volume: '$28.5B', marketCap: '$847B' },
+          { symbol: 'ETH', price: 2650.50, change24h: 1.23, volume: '$12.3B', marketCap: '$318B' },
+          { symbol: 'BNB', price: 315.75, change24h: -0.87, volume: '$1.8B', marketCap: '$47B' },
+          { symbol: 'XRP', price: 0.6234, change24h: 4.56, volume: '$2.1B', marketCap: '$34B' },
+          { symbol: 'ADA', price: 0.4789, change24h: -1.45, volume: '$890M', marketCap: '$17B' },
+          { symbol: 'SOL', price: 102.34, change24h: 3.21, volume: '$1.5B', marketCap: '$44B' },
+        ]);
+        setIsLiveData(false);
+      }
+    };
+
+    loadRealData();
+
+    // Set up real-time updates
+    const ws = RealMarketDataService.initializeRealTimeUpdates((price) => {
+      setMarketData(prev => prev.map(item => 
+        item.symbol === price.symbol.replace('USDT', '') ? {
+          ...item,
+          price: price.price,
+          change24h: price.change24h,
+          volume: `$${(price.volume24h / 1000000).toFixed(1)}M`
+        } : item
+      ));
+      setIsLiveData(true);
+    });
+
+    // Fallback interval for mock updates if WebSocket fails
+    let interval: NodeJS.Timeout;
+    if (!isLiveData) {
+      interval = setInterval(() => {
+        setMarketData(prev => prev.map(item => ({
+          ...item,
+          price: item.price * (1 + (Math.random() - 0.5) * 0.001),
+          change24h: item.change24h + (Math.random() - 0.5) * 0.1,
+        })));
+      }, 2000);
+    }
+
+    return () => {
+      if (ws) ws.close();
+      if (interval) clearInterval(interval);
+    };
+  }, [isLiveData]);
 
   return (
     <Card className="bg-gray-800 border-gray-700">
@@ -43,7 +90,9 @@ export const MarketOverview: React.FC = () => {
             <Activity className="h-5 w-5 mr-2 text-green-400" />
             Live Market Overview
           </h3>
-          <Badge className="bg-green-600 text-white">REAL-TIME</Badge>
+          <Badge className={isLiveData ? "bg-green-600 text-white" : "bg-yellow-600 text-white"}>
+            {isLiveData ? "REAL-TIME" : "SIMULATED"}
+          </Badge>
         </div>
         
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
