@@ -27,6 +27,25 @@ import { Activity, Shield, Zap, Database, TrendingUp, Users } from 'lucide-react
 
 export const TradingDashboard: React.FC = () => {
   const [selectedPair, setSelectedPair] = useState<string>('680c340f-4bdf-42a6-9896-18c3acdfd04b');
+  const [selectedBot, setSelectedBot] = useState<any>(null);
+
+  // Mock bot data for now
+  useEffect(() => {
+    setSelectedBot({
+      id: '1',
+      name: 'Demo Trading Bot',
+      strategy: 'Momentum Trading',
+      isRunning: false,
+      balance: 10000,
+      pnl: 0,
+      trades: 0,
+      winRate: 0
+    });
+  }, []);
+
+  const handlePairChange = (newPair: string) => {
+    setSelectedPair(newPair);
+  };
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
@@ -75,7 +94,7 @@ export const TradingDashboard: React.FC = () => {
           <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
-                <PriceChart tradingPairId={selectedPair} />
+                <PriceChart />
               </div>
               <div>
                 <MarketOverview />
@@ -83,14 +102,18 @@ export const TradingDashboard: React.FC = () => {
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <PortfolioOverview />
-              <OrderBook tradingPairId={selectedPair} />
+              <OrderBook />
             </div>
           </TabsContent>
 
           <TabsContent value="trading" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
-                <TradingPanel />
+                <TradingPanel 
+                  selectedPair={selectedPair}
+                  onPairChange={handlePairChange}
+                  requireAuth={true}
+                />
               </div>
               <div className="space-y-6">
                 <LiveSignals />
@@ -108,7 +131,9 @@ export const TradingDashboard: React.FC = () => {
               <NewsAnalysis />
               <SocialTrading />
             </div>
-            <AITradingBot />
+            {selectedBot && (
+              <AITradingBot bot={selectedBot} />
+            )}
           </TabsContent>
 
           <TabsContent value="management" className="space-y-6">
