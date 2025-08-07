@@ -47,6 +47,11 @@ export const TradingDashboard: React.FC = () => {
     setSelectedPair(newPair);
   };
 
+  const handleRequireAuth = (action: () => void) => {
+    // For now, just execute the action - in production this would check auth first
+    action();
+  };
+
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       <div className="container mx-auto px-4 py-6">
@@ -102,7 +107,7 @@ export const TradingDashboard: React.FC = () => {
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <PortfolioOverview />
-              <OrderBook />
+              <OrderBook tradingPairId={selectedPair} />
             </div>
           </TabsContent>
 
@@ -112,7 +117,7 @@ export const TradingDashboard: React.FC = () => {
                 <TradingPanel 
                   selectedPair={selectedPair}
                   onPairChange={handlePairChange}
-                  requireAuth={true}
+                  requireAuth={handleRequireAuth}
                 />
               </div>
               <div className="space-y-6">
