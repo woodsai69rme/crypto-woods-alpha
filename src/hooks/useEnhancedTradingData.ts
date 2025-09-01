@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -48,6 +47,8 @@ export interface AIBotData {
   id: string;
   name: string;
   type: string;
+  bot_type: string;
+  is_running: boolean;
   status: 'running' | 'stopped' | 'error';
   performance: {
     totalTrades: number;
@@ -55,6 +56,18 @@ export interface AIBotData {
     profitLoss: number;
   };
   lastUpdate: string;
+  enhancedState?: {
+    lastSignalTime: Date | null;
+    errorCount: number;
+    performance: {
+      totalTrades: number;
+      winRate: number;
+      profitLoss: number;
+      winningTrades: number;
+    };
+  };
+  memoryUsage?: number;
+  lastError?: string;
 }
 
 export const useEnhancedTradingData = () => {
@@ -65,7 +78,6 @@ export const useEnhancedTradingData = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch trading pairs from database
   const fetchTradingPairs = async () => {
     try {
       setLoading(true);
@@ -123,7 +135,6 @@ export const useEnhancedTradingData = () => {
     }
   };
 
-  // Fetch order book data
   const fetchOrderBook = async (tradingPairId: string) => {
     try {
       const pair = tradingPairs.find(p => p.id === tradingPairId);
@@ -132,12 +143,12 @@ export const useEnhancedTradingData = () => {
       const orderBookData = await CryptoDataService.getBinanceOrderBook(pair.symbol);
       setOrderBook({
         bids: orderBookData.bids.map(([price, quantity]) => ({ 
-          price: parseFloat(price), 
-          quantity: parseFloat(quantity) 
+          price: parseFloat(price.toString()), 
+          quantity: parseFloat(quantity.toString()) 
         })),
         asks: orderBookData.asks.map(([price, quantity]) => ({ 
-          price: parseFloat(price), 
-          quantity: parseFloat(quantity) 
+          price: parseFloat(price.toString()), 
+          quantity: parseFloat(quantity.toString()) 
         })),
         lastUpdate: new Date().toISOString()
       });
@@ -146,7 +157,6 @@ export const useEnhancedTradingData = () => {
     }
   };
 
-  // Fetch trading accounts
   const fetchTradingAccounts = async () => {
     try {
       const { data: user } = await supabase.auth.getUser();
@@ -174,18 +184,15 @@ export const useEnhancedTradingData = () => {
     }
   };
 
-  // Update selected pair and fetch related data
   const updateSelectedPair = (pairId: string) => {
     setSelectedPair(pairId);
     fetchOrderBook(pairId);
   };
 
-  // Real-time data updates
   useEffect(() => {
     fetchTradingPairs();
     fetchTradingAccounts();
 
-    // Set up real-time updates every 5 seconds
     const interval = setInterval(() => {
       if (selectedPair) {
         fetchOrderBook(selectedPair);
@@ -195,7 +202,6 @@ export const useEnhancedTradingData = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Update order book when selected pair changes
   useEffect(() => {
     if (selectedPair) {
       fetchOrderBook(selectedPair);
@@ -220,11 +226,10 @@ export const useSystemHealth = () => {
   return useQuery({
     queryKey: ['systemHealth'],
     queryFn: async (): Promise<SystemHealthData> => {
-      // Mock system health data - in a real app, this would come from monitoring APIs
-      const memoryUsage = Math.floor(Math.random() * 100) + 50; // 50-150MB
-      const activeBots = Math.floor(Math.random() * 5) + 1; // 1-5 bots
-      const totalErrors = Math.floor(Math.random() * 10); // 0-10 errors
-      const uptime = Math.floor(Math.random() * 86400) + 86400; // 1-2 days in seconds
+      const memoryUsage = Math.floor(Math.random() * 100) + 50;
+      const activeBots = Math.floor(Math.random() * 5) + 1;
+      const totalErrors = Math.floor(Math.random() * 10);
+      const uptime = Math.floor(Math.random() * 86400) + 86400;
 
       let status: 'healthy' | 'warning' | 'critical' = 'healthy';
       if (memoryUsage > 120 || totalErrors > 7) {
@@ -246,7 +251,7 @@ export const useSystemHealth = () => {
         }
       };
     },
-    refetchInterval: 10000 // Update every 10 seconds
+    refetchInterval: 10000
   });
 };
 
@@ -263,49 +268,93 @@ export const useEnhancedAIBots = () => {
 
         if (error) throw error;
 
-        return (data || []).map(bot => ({
-          id: bot.id,
-          name: bot.name,
-          type: bot.bot_type,
-          status: bot.is_running ? 'running' : 'stopped',
-          performance: {
-            totalTrades: bot.performance_stats?.totalTrades || 0,
-            winRate: bot.performance_stats?.winRate || 0,
-            profitLoss: bot.performance_stats?.profitLoss || 0
-          },
-          lastUpdate: bot.updated_at || new Date().toISOString()
-        }));
+        return (data || []).map(bot => {
+          const performanceStats = bot.performance_stats as any;
+          return {
+            id: bot.id,
+            name: bot.name,
+            type: bot.bot_type,
+            bot_type: bot.bot_type,
+            is_running: bot.is_running || false,
+            status: bot.is_running ? 'running' : 'stopped',
+            performance: {
+              totalTrades: performanceStats?.totalTrades || 0,
+              winRate: performanceStats?.winRate || 0,
+              profitLoss: performanceStats?.profitLoss || 0
+            },
+            lastUpdate: bot.updated_at || new Date().toISOString(),
+            enhancedState: {
+              lastSignalTime: bot.updated_at ? new Date(bot.updated_at) : null,
+              errorCount: 0,
+              performance: {
+                totalTrades: performanceStats?.totalTrades || 0,
+                winRate: performanceStats?.winRate || 0,
+                profitLoss: performanceStats?.profitLoss || 0,
+                winningTrades: Math.floor((performanceStats?.totalTrades || 0) * (performanceStats?.winRate || 0) / 100)
+              }
+            },
+            memoryUsage: Math.floor(Math.random() * 50) + 20,
+            lastError: undefined
+          };
+        });
       } catch (error) {
         console.error('Error fetching AI bots:', error);
-        // Return mock data as fallback
         return [
           {
             id: '1',
             name: 'Momentum Bot',
             type: 'momentum',
+            bot_type: 'momentum',
+            is_running: true,
             status: 'running',
             performance: {
               totalTrades: 156,
               winRate: 73.2,
               profitLoss: 2847.65
             },
-            lastUpdate: new Date().toISOString()
+            lastUpdate: new Date().toISOString(),
+            enhancedState: {
+              lastSignalTime: new Date(),
+              errorCount: 0,
+              performance: {
+                totalTrades: 156,
+                winRate: 73.2,
+                profitLoss: 2847.65,
+                winningTrades: 114
+              }
+            },
+            memoryUsage: 45,
+            lastError: undefined
           },
           {
             id: '2',
             name: 'DCA Bot',
             type: 'dca',
+            bot_type: 'dca',
+            is_running: false,
             status: 'stopped',
             performance: {
               totalTrades: 89,
               winRate: 67.4,
               profitLoss: 1234.56
             },
-            lastUpdate: new Date().toISOString()
+            lastUpdate: new Date().toISOString(),
+            enhancedState: {
+              lastSignalTime: new Date(Date.now() - 3600000),
+              errorCount: 1,
+              performance: {
+                totalTrades: 89,
+                winRate: 67.4,
+                profitLoss: 1234.56,
+                winningTrades: 60
+              }
+            },
+            memoryUsage: 32,
+            lastError: 'Connection timeout'
           }
         ];
       }
     },
-    refetchInterval: 15000 // Update every 15 seconds
+    refetchInterval: 15000
   });
 };
