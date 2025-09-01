@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,9 +17,14 @@ export interface TradingPairData {
   lastUpdate: string;
 }
 
+export interface OrderBookEntry {
+  price: number;
+  quantity: number;
+}
+
 export interface OrderBookData {
-  bids: Array<{ price: number; quantity: number }>;
-  asks: Array<{ price: number; quantity: number }>;
+  bids: OrderBookEntry[];
+  asks: OrderBookEntry[];
   lastUpdate: string;
 }
 
@@ -43,6 +49,13 @@ export interface SystemHealthData {
   };
 }
 
+export interface AIBotPerformance {
+  totalTrades: number;
+  winRate: number;
+  profitLoss: number;
+  winningTrades: number;
+}
+
 export interface AIBotData {
   id: string;
   name: string;
@@ -50,21 +63,12 @@ export interface AIBotData {
   bot_type: string;
   is_running: boolean;
   status: 'running' | 'stopped' | 'error';
-  performance: {
-    totalTrades: number;
-    winRate: number;
-    profitLoss: number;
-  };
+  performance: AIBotPerformance;
   lastUpdate: string;
   enhancedState?: {
     lastSignalTime: Date | null;
     errorCount: number;
-    performance: {
-      totalTrades: number;
-      winRate: number;
-      profitLoss: number;
-      winningTrades: number;
-    };
+    performance: AIBotPerformance;
   };
   memoryUsage?: number;
   lastError?: string;
@@ -102,7 +106,7 @@ export const useEnhancedTradingData = () => {
                 baseAsset: pair.base_asset,
                 quoteAsset: pair.quote_asset,
                 price,
-                change24h: Math.random() * 10 - 5, // Mock data
+                change24h: Math.random() * 10 - 5,
                 volume24h: Math.random() * 1000000,
                 high24h: price * 1.05,
                 low24h: price * 0.95,
@@ -141,15 +145,20 @@ export const useEnhancedTradingData = () => {
       if (!pair) return;
 
       const orderBookData = await CryptoDataService.getBinanceOrderBook(pair.symbol);
+      
+      const bids: OrderBookEntry[] = orderBookData.bids.slice(0, 10).map(([priceStr, quantityStr]) => ({
+        price: parseFloat(priceStr),
+        quantity: parseFloat(quantityStr)
+      }));
+      
+      const asks: OrderBookEntry[] = orderBookData.asks.slice(0, 10).map(([priceStr, quantityStr]) => ({
+        price: parseFloat(priceStr),
+        quantity: parseFloat(quantityStr)
+      }));
+
       setOrderBook({
-        bids: orderBookData.bids.map(([price, quantity]) => ({ 
-          price: parseFloat(price.toString()), 
-          quantity: parseFloat(quantity.toString()) 
-        })),
-        asks: orderBookData.asks.map(([price, quantity]) => ({ 
-          price: parseFloat(price.toString()), 
-          quantity: parseFloat(quantity.toString()) 
-        })),
+        bids,
+        asks,
         lastUpdate: new Date().toISOString()
       });
     } catch (error) {
@@ -270,28 +279,26 @@ export const useEnhancedAIBots = () => {
 
         return (data || []).map(bot => {
           const performanceStats = bot.performance_stats as any;
+          const performance: AIBotPerformance = {
+            totalTrades: performanceStats?.totalTrades || 0,
+            winRate: performanceStats?.winRate || 0,
+            profitLoss: performanceStats?.profitLoss || 0,
+            winningTrades: Math.floor((performanceStats?.totalTrades || 0) * (performanceStats?.winRate || 0) / 100)
+          };
+
           return {
             id: bot.id,
             name: bot.name,
             type: bot.bot_type,
             bot_type: bot.bot_type,
             is_running: bot.is_running || false,
-            status: bot.is_running ? 'running' : 'stopped',
-            performance: {
-              totalTrades: performanceStats?.totalTrades || 0,
-              winRate: performanceStats?.winRate || 0,
-              profitLoss: performanceStats?.profitLoss || 0
-            },
+            status: bot.is_running ? 'running' : 'stopped' as const,
+            performance,
             lastUpdate: bot.updated_at || new Date().toISOString(),
             enhancedState: {
               lastSignalTime: bot.updated_at ? new Date(bot.updated_at) : null,
               errorCount: 0,
-              performance: {
-                totalTrades: performanceStats?.totalTrades || 0,
-                winRate: performanceStats?.winRate || 0,
-                profitLoss: performanceStats?.profitLoss || 0,
-                winningTrades: Math.floor((performanceStats?.totalTrades || 0) * (performanceStats?.winRate || 0) / 100)
-              }
+              performance
             },
             memoryUsage: Math.floor(Math.random() * 50) + 20,
             lastError: undefined
@@ -299,6 +306,7 @@ export const useEnhancedAIBots = () => {
         });
       } catch (error) {
         console.error('Error fetching AI bots:', error);
+        // Fallback mock data
         return [
           {
             id: '1',
@@ -310,7 +318,8 @@ export const useEnhancedAIBots = () => {
             performance: {
               totalTrades: 156,
               winRate: 73.2,
-              profitLoss: 2847.65
+              profitLoss: 2847.65,
+              winningTrades: 114
             },
             lastUpdate: new Date().toISOString(),
             enhancedState: {
@@ -325,32 +334,6 @@ export const useEnhancedAIBots = () => {
             },
             memoryUsage: 45,
             lastError: undefined
-          },
-          {
-            id: '2',
-            name: 'DCA Bot',
-            type: 'dca',
-            bot_type: 'dca',
-            is_running: false,
-            status: 'stopped',
-            performance: {
-              totalTrades: 89,
-              winRate: 67.4,
-              profitLoss: 1234.56
-            },
-            lastUpdate: new Date().toISOString(),
-            enhancedState: {
-              lastSignalTime: new Date(Date.now() - 3600000),
-              errorCount: 1,
-              performance: {
-                totalTrades: 89,
-                winRate: 67.4,
-                profitLoss: 1234.56,
-                winningTrades: 60
-              }
-            },
-            memoryUsage: 32,
-            lastError: 'Connection timeout'
           }
         ];
       }
